@@ -5,24 +5,19 @@ function App() {
 	const errorsInit = {
 		loginError: null,
 		passError: null,
-		rePassError: null,
 	};
 	const [login, setLogin] = useState('');
+	const [isLoginOk, setIsLoginOk] = useState(false);
 	const [pass, setPass] = useState('');
+	const [isPassOk, setIsPassOk] = useState(false);
 	const [rePass, setRePass] = useState('');
 	const [errors, setErrors] = useState(errorsInit);
 
 	const sendFormData = (formData) => {
 		console.log(formData);
 	};
-
-	const isBtnDisabled =
-		!login.length ||
-		!pass.length ||
-		rePass !== pass ||
-		!!errors.loginError ||
-		!!errors.passError ||
-		!!errors.rePassError;
+	const isRePassOk = pass === rePass;
+	const isBtnDisabled = !(isLoginOk && isPassOk && isRePassOk);
 
 	const onLoginChange = ({ target }) => {
 		setLogin(target.value);
@@ -35,7 +30,7 @@ function App() {
 		} else if (target.value.length > 20) {
 			newError = 'Неверный логин. Должно быть не больше 20 символов';
 		}
-
+		setIsLoginOk(!newError && target.value.length >= 3);
 		setErrors({ ...errors, loginError: newError });
 	};
 	const onLoginBlur = ({ target }) => {
@@ -51,39 +46,24 @@ function App() {
 		setErrors({ ...errors, passError: null });
 	};
 	const onPassBlur = ({ target }) => {
-		console.log('pass', target.value);
+		let newError = null;
 		if (!/^[0-9A-Za-z!@#$%^&*]*$/.test(target.value)) {
-			setErrors({
-				...errors,
-				passError:
-					'Пароль содержитнедопустимые символы. Допустимы символы латинского алфавита, цифры и символы !@#$%^&*',
-			});
+			newError =
+				'Пароль содержитнедопустимые символы. Допустимы символы латинского алфавита, цифры и символы !@#$%^&*';
 		} else if (target.value.length < 8) {
-			setErrors({
-				...errors,
-				passError: 'Пароль должен быть не менее 8 символов',
-			});
+			newError = 'Пароль должен быть не менее 8 символов';
 		} else if (!/(?=.*?[0-9])(?=.*?[!@#$%^&*])/.test(target.value)) {
-			setErrors({
-				...errors,
-				passError:
-					'Пароль должен содержать хотя бы одну цифру, и хотя бы один спецсимвол из !@#$%^&*',
-			});
+			newError =
+				'Пароль должен содержать хотя бы одну цифру, и хотя бы один спецсимвол из !@#$%^&*';
 		}
+		setErrors({ ...errors, passError: newError });
+		setIsPassOk(!newError);
 	};
 	const onRePassChange = ({ target }) => {
 		setRePass(target.value);
-		setErrors({ ...errors, rePassError: null });
 	};
-	const onRePassBlur = ({ target }) => {
-		console.log('repass', target.value);
-		if (!errors.passError && pass !== rePass) {
-			setErrors({
-				...errors,
-				rePassError: 'Пароли не совпадают',
-			});
-		}
-	};
+	const onRePassBlur = ({ target }) => {};
+
 	const onSubmit = (event) => {
 		event.preventDefault();
 		sendFormData({ login, pass });
@@ -94,9 +74,6 @@ function App() {
 			<h1>Регистрационная форма</h1>
 			{errors.loginError && <div className={styles.error}>{errors.loginError}</div>}
 			{errors.passError && <div className={styles.error}>{errors.passError}</div>}
-			{errors.rePassError && (
-				<div className={styles.error}>{errors.rePassError}</div>
-			)}
 			<input
 				className={
 					errors.loginError
@@ -134,6 +111,9 @@ function App() {
 				onBlur={onRePassBlur}
 				placeholder="Повторите пароль"
 			/>
+			{!isRePassOk && rePass.length >= 1 && (
+				<div className={styles.error}>Пароли не совпадают</div>
+			)}
 			<button className={styles.regButton} type="submit" disabled={isBtnDisabled}>
 				Зарегистрировать
 			</button>
