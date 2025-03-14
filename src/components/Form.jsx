@@ -1,105 +1,72 @@
 import styles from './Form.module.css';
-import { useState, useRef, useEffect } from 'react';
-import { validateForm } from '../utils/validation';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { fieldsSchema } from '../data/validationConfig';
+
+const sendFormData = (formData) => {
+	console.log(formData);
+};
 
 export const Form = () => {
-	const init = {
-		login: '',
-		pass: '',
-		rePass: '',
-	};
-
-	const [formData, setFormData] = useState(init);
-	const [errors, setErrors] = useState(init);
-	const [toShowErrors, setToShowErrors] = useState(init);
-
-	const submitButtonRef = useRef();
-	const isSubmitButtonDisabled = Object.keys(errors).length > 0;
-
-	const onChangeHandler = ({ target }) => {
-		setFormData({ ...formData, [target.name]: target.value });
-	};
-	const onBlureHandler = ({ target }) => {
-		setToShowErrors({ ...toShowErrors, [target.name]: !!errors[target.name] });
-	};
-	const onFocusHandler = ({ target }) => {
-		setToShowErrors({ ...toShowErrors, [target.name]: false });
-	};
-
-	useEffect(() => {
-		const errors = validateForm(formData);
-		setErrors(errors);
-	}, [formData]);
-
-	useEffect(() => {
-		if (!isSubmitButtonDisabled) {
-			submitButtonRef.current.focus();
-		}
+	const {
+		register,
+		handleSubmit,
+		formState: { errors, isValid },
+	} = useForm({
+		defaultValues: {
+			login: '',
+			pass: '',
+			rePass: '',
+		},
+		resolver: yupResolver(fieldsSchema),
+		mode: 'onChange',
 	});
 
-	const sendFormData = (formData) => {
-		console.log(formData.login, formData.pass);
-	};
-
-	const onSubmit = (event) => {
-		event.preventDefault();
-		sendFormData(formData);
-	};
+	const loginError = errors.login?.message;
+	const passError = errors.pass?.message;
+	const rePassError = errors.rePass?.message;
 
 	return (
-		<form className={styles.regForm} onSubmit={onSubmit}>
+		<form className={styles.regForm} onSubmit={handleSubmit(sendFormData)}>
 			<h1>Регистрационная форма</h1>
 			<input
 				className={
-					toShowErrors.login
+					loginError
 						? styles.regInput + ' ' + styles.errorInput
 						: styles.regInput
 				}
 				name="login"
 				type="text"
 				placeholder="Имя пользователя"
-				value={formData.login}
-				onChange={onChangeHandler}
-				onBlur={onBlureHandler}
-				onFocus={onFocusHandler}
+				autoComplete="off"
+				{...register('login')}
 			/>
-			{toShowErrors.login && <div className={styles.error}>{errors.login}</div>}
+			{loginError && <div className={styles.error}>{loginError}</div>}
 			<input
 				className={
-					toShowErrors.pass
+					passError
 						? styles.regInput + ' ' + styles.errorInput
 						: styles.regInput
 				}
 				name="pass"
 				type="password"
 				placeholder="Пароль"
-				value={formData.pass}
-				onChange={onChangeHandler}
-				onBlur={onBlureHandler}
-				onFocus={onFocusHandler}
+				{...register('pass')}
 			/>
-			{toShowErrors.pass && <div className={styles.error}>{errors.pass}</div>}
+			{passError && <div className={styles.error}>{passError}</div>}
 			<input
 				className={
-					toShowErrors.rePass
+					rePassError
 						? styles.regInput + ' ' + styles.errorInput
 						: styles.regInput
 				}
 				name="rePass"
 				type="password"
 				placeholder="Повторите пароль"
-				value={formData.rePass}
-				onChange={onChangeHandler}
-				onBlur={onBlureHandler}
-				onFocus={onFocusHandler}
+				{...register('rePass')}
 			/>
-			{toShowErrors.rePass && <div className={styles.error}>{errors.rePass}</div>}
-			<button
-				className={styles.regButton}
-				type="submit"
-				ref={submitButtonRef}
-				disabled={isSubmitButtonDisabled}
-			>
+			{rePassError && <div className={styles.error}>{rePassError}</div>}
+			<button className={styles.regButton} type="submit" disabled={!isValid}>
 				Зарегистрировать
 			</button>
 		</form>
